@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "profilerTrackComparator",
-    "slug": "profilerTrackComparator",
+    "name": "React Profiler Trace Analyzer",
+    "slug": "React Profiler Trace Analyzer",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash-icon.jpg",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -27,6 +27,9 @@
       "output": "single",
       "publicPath": "react-native-profiler-track_comparator/",
       "bundler": "metro"
+    },
+    "web": {
+      "favicon": "./assets/icon.jpg"
     }
   }
 }
