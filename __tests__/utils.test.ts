@@ -1,4 +1,4 @@
-import {mockFile1, mockFile2} from "../__mocks__/mocks";
+import {mockFile1, mockFile2, mockFileWithDynamicMounts} from "../__mocks__/mocks";
 import {
     aggregateCommitTimes,
     calculateAverageTimes,
@@ -40,7 +40,7 @@ describe('profilerUtils', () => {
     });
 
     describe('extractComponentMap', () => {
-        it('extracts component names correctly', () => {
+        it('extracts component names from snapshots', () => {
             const map = extractComponentMap(mockFile1);
 
             expect(map.size).toBe(4);
@@ -48,6 +48,29 @@ describe('profilerUtils', () => {
             expect(map.get(2)).toBe('Header');
             expect(map.get(3)).toBe('Button');
             expect(map.get(4)).toBe('List');
+        });
+
+        it('extracts dynamically mounted components from operations', () => {
+            const map = extractComponentMap(mockFileWithDynamicMounts);
+
+            expect(map.get(5)).toBe('Modal');
+            expect(map.get(6)).toBe('Tooltip');
+        });
+
+        it('includes both snapshot and operations components', () => {
+            const map = extractComponentMap(mockFileWithDynamicMounts);
+
+            expect(map.get(1)).toBe('App');
+            expect(map.get(2)).toBe('Header');
+            expect(map.get(5)).toBe('Modal');
+            expect(map.get(6)).toBe('Tooltip');
+            expect(map.size).toBe(6);
+        });
+
+        it('snapshot displayName takes precedence over operations', () => {
+            const map = extractComponentMap(mockFileWithDynamicMounts);
+
+            expect(map.get(1)).toBe('App');
         });
     });
 
@@ -68,6 +91,15 @@ describe('profilerUtils', () => {
             const stats = calculateComponentStats([mockFile1]);
 
             expect(stats.fiberActualDurationsTotal.size).toBe(4);
+        });
+
+        it('includes dynamically mounted components from operations', () => {
+            const stats = calculateComponentStats([mockFileWithDynamicMounts]);
+
+            expect(stats.fiberActualDurationsTotal.get('Modal')).toBeCloseTo(6);
+            expect(stats.fiberSelfDurationsTotal.get('Modal')).toBeCloseTo(5);
+            expect(stats.fiberActualDurationsTotal.get('Tooltip')).toBeCloseTo(2);
+            expect(stats.fiberSelfDurationsTotal.get('Tooltip')).toBeCloseTo(2);
         });
     });
 });
