@@ -1,4 +1,5 @@
 import {ProfilerFile, AggregatedTimes, FileCommitData, SnapshotNode} from "../types/FileEntry";
+import {extractComponentNamesFromOperations} from "./operationsParser";
 
 export const aggregateCommitTimes = (
     profilerData: ProfilerFile
@@ -52,70 +53,6 @@ export const calculateAverageTimes = (
     };
 };
 
-const TREE_OPERATION_ADD = 1;
-const TREE_OPERATION_REMOVE = 2;
-const TREE_OPERATION_REORDER_CHILDREN = 3;
-const TREE_OPERATION_UPDATE_TREE_BASE_DURATION = 4;
-const TREE_OPERATION_UPDATE_ERRORS_OR_WARNINGS = 5;
-const TREE_OPERATION_SET_SUBTREE_MODE = 6;
-
-const extractComponentNamesFromOperations = (operations: number[][]): Map<number, string> => {
-    const nameMap = new Map<number, string>();
-
-    for (const ops of operations) {
-        if (ops.length < 3) continue;
-
-        const stringTableSize = ops[2];
-        const stringTable: string[] = [];
-        let i = 3;
-        const stringTableEnd = 3 + stringTableSize;
-
-        while (i < stringTableEnd && i < ops.length) {
-            const strLen = ops[i++];
-            const chars = ops.slice(i, i + strLen);
-            stringTable.push(String.fromCharCode(...chars));
-            i += strLen;
-        }
-
-        i = stringTableEnd;
-        while (i < ops.length) {
-            const opType = ops[i++];
-
-            if (opType === TREE_OPERATION_ADD) {
-                if (i + 7 > ops.length) break;
-                const fiberId = ops[i++];
-                i++; // type
-                i++; // parentID
-                i++; // ownerID
-                const displayNameIdx = ops[i++];
-                i++; // keyStringID
-                i++; // compiledWithForget flag
-
-                if (displayNameIdx > 0 && displayNameIdx <= stringTable.length) {
-                    nameMap.set(fiberId, stringTable[displayNameIdx - 1]);
-                }
-            } else if (opType === TREE_OPERATION_REMOVE) {
-                const count = ops[i++];
-                i += count;
-            } else if (opType === TREE_OPERATION_REORDER_CHILDREN) {
-                i++; // fiberID
-                const childCount = ops[i++];
-                i += childCount;
-            } else if (opType === TREE_OPERATION_UPDATE_TREE_BASE_DURATION) {
-                i += 2; // fiberID + duration
-            } else if (opType === TREE_OPERATION_UPDATE_ERRORS_OR_WARNINGS) {
-                i += 3; // fiberID + errors + warnings
-            } else if (opType === TREE_OPERATION_SET_SUBTREE_MODE) {
-                i += 2; // fiberID + mode
-            } else {
-                // Unknown op (e.g. virtual instance ops in newer formats) — skip 2 values as heuristic
-                i += 2;
-            }
-        }
-    }
-
-    return nameMap;
-};
 
 export const extractComponentMap = (profilerData: ProfilerFile): Map<number, string> => {
     const componentMap = new Map<number, string>();
