@@ -1,4 +1,5 @@
 import {ProfilerFile, AggregatedTimes, FileCommitData, SnapshotNode} from "../types/FileEntry";
+import {extractComponentNamesFromOperations} from "./operationsParser";
 
 export const aggregateCommitTimes = (
     profilerData: ProfilerFile
@@ -52,10 +53,16 @@ export const calculateAverageTimes = (
     };
 };
 
+
 export const extractComponentMap = (profilerData: ProfilerFile): Map<number, string> => {
     const componentMap = new Map<number, string>();
 
     profilerData.dataForRoots.forEach((root) => {
+        if (Array.isArray(root.operations)) {
+            const opsMap = extractComponentNamesFromOperations(root.operations);
+            opsMap.forEach((name, id) => componentMap.set(id, name));
+        }
+
         if (Array.isArray(root.snapshots)) {
             root.snapshots.forEach((entry) => {
                 const id = entry[0];

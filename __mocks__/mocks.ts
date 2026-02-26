@@ -17,6 +17,25 @@ const commonSnapshots: [number, SnapshotNode][] = [
     [4, createNode(4, "List")],
 ];
 
+// Encodes an operations array that ADDs fiber id=5 with displayName "Modal"
+// and fiber id=6 with displayName "Tooltip", simulating components mounted during profiling.
+// Format: [rendererID, rootFiberID, stringTableSize, ...stringTable, ...ops]
+// String table entry: [charCount, ...charCodes]
+// ADD op: [1, fiberID, type, parentID, ownerID, nameStringIdx, keyStringIdx, compiledWithForget]
+const modalChars = Array.from("Modal").map(c => c.charCodeAt(0));    // 5 chars
+const tooltipChars = Array.from("Tooltip").map(c => c.charCodeAt(0)); // 7 chars
+const stringTableSize = (1 + modalChars.length) + (1 + tooltipChars.length);
+const dynamicMountOps: number[][] = [
+    [
+        1, 1,                                          // rendererID=1, rootFiberID=1
+        stringTableSize,                               // string table size
+        modalChars.length, ...modalChars,              // string 1: "Modal"
+        tooltipChars.length, ...tooltipChars,          // string 2: "Tooltip"
+        1, 5, 5, 1, 1, 1, 0, 0,                       // ADD fiber 5, type=5, parent=1, owner=1, name=str[0], key=null, forget=0
+        1, 6, 5, 1, 1, 2, 0, 0,                       // ADD fiber 6, type=5, parent=1, owner=1, name=str[1], key=null, forget=0
+    ],
+];
+
 export const mockFile1: ProfilerFile = {
     version: 1.2,
     dataForRoots: [
@@ -137,5 +156,30 @@ export const mockFile2: ProfilerFile = {
         }
     ]
 } ;
+
+// File where fiber IDs 5 and 6 appear in durations but NOT in snapshots —
+// they are only discoverable via the operations array.
+export const mockFileWithDynamicMounts: ProfilerFile = {
+    version: 5,
+    dataForRoots: [
+        {
+            snapshots: commonSnapshots,
+            operations: dynamicMountOps,
+            commitData: [
+                {
+                    duration: 12,
+                    effectDuration: 1,
+                    passiveEffectDuration: 0,
+                    timestamp: 500,
+                    priorityLevel: "Normal",
+                    changeDescriptions: null,
+                    updaters: [],
+                    fiberActualDurations: [[1, 4], [5, 6], [6, 2]],
+                    fiberSelfDurations:   [[1, 1], [5, 5], [6, 2]],
+                },
+            ],
+        },
+    ],
+};
 
 export const mockFilesArray = [mockFile1, mockFile2];

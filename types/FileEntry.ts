@@ -40,6 +40,7 @@ type CommitDataEntry = {
  type RootData = {
     commitData: CommitDataEntry[];
     snapshots: SnapshotEntry[];
+    operations?: number[][];
 };
 
 type ProfilerFile = {
